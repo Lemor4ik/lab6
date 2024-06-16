@@ -1,73 +1,64 @@
 ﻿#include <iostream>
-#include <fstream>
-#include <vector>
-#include <string>
-#include <algorithm>
-#include <set>
-#include <unordered_set>
+#include <stdexcept>
+#include <cmath>
 
 using namespace std;
 
-class BankLoan {
-    string name;
-    double loanAmount;
-    string currencyType;
-    double interestRate;
+class NotPrimeException : public invalid_argument {
+private:
+    int value;
 public:
-    BankLoan() : name(""), loanAmount(0.0), currencyType(""), interestRate(0.0) {}
-    BankLoan(string name, double loanAmount, string currencyType, double interestRate)
-        : name(name), loanAmount(loanAmount), currencyType(currencyType), interestRate(interestRate) {}
-    bool operator<(const BankLoan& other) const {
-        return loanAmount < other.loanAmount;
+    NotPrimeException(int v) : invalid_argument("Не простое число"), value(v) {}
+    void printInvalidValue() const {
+        std::cout << "ОШИБКА 404" << endl;
     }
-    bool operator==(const BankLoan& other) const {
-        return name == other.name && loanAmount == other.loanAmount &&
-            currencyType == other.currencyType && interestRate == other.interestRate;
-    }
-    friend ostream& operator<<(ostream& os, const BankLoan& loan) {
-        os << "Name: " << loan.name << ", Loan Amount: " << loan.loanAmount
-            << ", Currency Type: " << loan.currencyType << ", Interest Rate: " << loan.interestRate << "%";
-        return os;
-    }
+};
 
-    struct HashF {
-        size_t operator()(const BankLoan& loan) const {
-            return hash<string>()(loan.name) ^ hash<double>()(loan.loanAmount) ^
-                hash<string>()(loan.currencyType) ^ hash<double>()(loan.interestRate);
+bool isPrime(int n) {
+    if (n <= 1) return false;
+    if (n <= 3) return true;
+    if (n % 2 == 0 || n % 3 == 0) return false;
+    for (int i = 5; i * i <= n; i += 6) {
+        if (n % i == 0 || n % (i + 2) == 0) return false;
+    }
+    return true;
+}
+
+class PrimeNumber {
+private:
+    int value;
+public:
+    PrimeNumber(int v) : value(v) {
+        if (!isPrime(v)) {
+            throw NotPrimeException(v);
         }
-    };
+    }
+    int getValue() const {
+        return value;
+    }
+    void print() const {
+        std::cout << value << " простое" << std::endl;
+    }
 };
 
 int main() {
-    vector<BankLoan> loans;
-    set<BankLoan> setLoans;
-    unordered_set<BankLoan, BankLoan::HashF> unorderedSetLoans;
-    ifstream inputFile("input.txt");
-
-    string name, currencyType;
-    double loanAmount, interestRate;
-    while (inputFile >> name >> loanAmount >> currencyType >> interestRate) {
-        BankLoan loan(name, loanAmount, currencyType, interestRate);
-        loans.emplace_back(loan);
-        setLoans.insert(loan);
-        unorderedSetLoans.insert(loan);
+    try {
+        PrimeNumber p1(17);
+        p1.print();
+        PrimeNumber p2(18);
     }
-    inputFile.close();
-    sort(loans.begin(), loans.end());
-    for (const auto& loan : loans) {
-        cout << loan << endl;
-    }
-    ofstream outputFile("output.txt");
-    for (const auto& loan : loans) {
-        outputFile << loan << endl;
-    }
-    outputFile.close();
-    for (const auto& loan : setLoans) {
-        cout << loan << endl;
-    }
-    for (const auto& loan : unorderedSetLoans) {
-        cout << loan << endl;
+    catch (const NotPrimeException& e) {
+        std::cout << "Исключение " << e.what() << std::endl;
+        e.printInvalidValue();
     }
 
+    try {
+        PrimeNumber p3(19);
+        p3.print();
+    }
+    catch (const NotPrimeException& e) {
+        std::cout << "Исключение" << e.what() << std::endl;
+        e.printInvalidValue();
+    }
     return 0;
 }
